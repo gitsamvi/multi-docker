@@ -1,0 +1,23 @@
+language: generic
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t samvidocker/react-test -f ./client/Dockerfile.dev ./client
+
+scripts:
+  - docker run -e CI=true samvidocker/react-test npm run test -- --coverage
+
+after_success:
+  - docker build -t samvidocker/multi-client ./client
+  - docker build -t samvidocker/multi-worker ./worker
+  - docker build -t samvidocker/multi-server ./server
+  - docker build -t samvidocker/multi-nginx ./nginx
+
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+
+  - docker push samvidocker/multi-client
+  - docker push samvidocker/multi-worker
+  - docker push samvidocker/multi-server
+  - docker push samvidocker/multi-nginx
